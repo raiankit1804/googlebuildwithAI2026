@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
-const API = '/api';
+const API = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/$/, '');
 
 /* ── Network Helpers ─────────────────────────────────────────────── */
 const fetcher = async (url) => {
