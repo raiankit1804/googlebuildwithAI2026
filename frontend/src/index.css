@@ -56,6 +56,21 @@ body {
   box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45), inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
   border-radius: 20px;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 1.15rem;
+  box-sizing: border-box;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.glass-pill {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 9999px;
+  padding: 0.4rem 0.85rem;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
 }
 
 .glass-panel:hover {
@@ -172,6 +187,10 @@ body {
 .leaflet-container {
   background: #050b18 !important;
   font-family: inherit !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 380px !important;
+  z-index: 10;
 }
 
 .leaflet-control-zoom {
@@ -206,6 +225,35 @@ body {
 .leaflet-popup-tip {
   background: rgba(13, 22, 41, 0.9) !important;
   border: 1px solid rgba(56, 189, 248, 0.3) !important;
+}
+
+.leaflet-control-attribution {
+  background: rgba(15, 23, 42, 0.75) !important;
+  color: #64748b !important;
+  font-size: 9px !important;
+  border-radius: 6px !important;
+  margin: 4px !important;
+  padding: 2px 6px !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.leaflet-control-attribution a {
+  color: #94a3b8 !important;
+  text-decoration: none !important;
+}
+
+.leaflet-control-attribution a:hover {
+  color: #38bdf8 !important;
+}
+
+/* ── Responsive Scrollbar Helpers ───────────────────────────────── */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* ── Scrollbars ──────────────────────────────────────────────────── */

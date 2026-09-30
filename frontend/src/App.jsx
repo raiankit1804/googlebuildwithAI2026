@@ -1,6 +1,7 @@
 /**
  * Sanjeevani Grid — Sovereign Federated AI Platform
  * Ultra-Futuristic Glassmorphic Cockpit inspired by Aerospace Telemetry HUD
+ * Fully responsive & optimized across Mobile, Tablet, Laptop, and 4K Displays.
  */
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
@@ -12,7 +13,7 @@ import {
   Activity, AlertTriangle, ArrowUpRight, CheckCircle2, ChevronRight,
   Crosshair, Eye, Globe, Layers, Navigation, Package, Pill,
   Radio, RefreshCw, Search, Send, ShieldAlert, Sparkles, TrendingUp,
-  Truck, Users, X, Zap, BedDouble, Bell, Flame
+  Truck, Users, X, Zap, BedDouble, Bell, Flame, Menu
 } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
@@ -43,29 +44,54 @@ const statusPalette = {
 };
 
 const COUNTRIES = [
-  { code: 'ALL', name: 'Global BRICS Grid' },
+  { code: 'ALL', name: 'Global BRICS' },
   { code: 'IN', name: '🇮🇳 India' },
   { code: 'BR', name: '🇧🇷 Brazil' },
   { code: 'RU', name: '🇷🇺 Russia' },
   { code: 'CN', name: '🇨🇳 China' },
-  { code: 'ZA', name: '🇿🇦 South Africa' },
+  { code: 'ZA', name: '🇿🇦 S. Africa' },
 ];
 
-/* ── Map Camera Controller ───────────────────────────────────────── */
+/* ── Map Camera Controller & Responsive Resizer ──────────────────── */
 function MapCameraController({ center, zoom }) {
   const map = useMap();
+
+  useEffect(() => {
+    // Force Leaflet to re-calculate container dimensions across all devices & viewports
+    map.invalidateSize();
+    const handleResize = () => {
+      try {
+        map.invalidateSize();
+      } catch {
+        // ignore unmounted edge cases
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    const t1 = setTimeout(() => handleResize(), 100);
+    const t2 = setTimeout(() => handleResize(), 400);
+    const t3 = setTimeout(() => handleResize(), 1200);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, [map]);
+
   useEffect(() => {
     if (center) {
       map.flyTo(center, zoom || 6, { duration: 1.4 });
     }
   }, [center, zoom, map]);
+
   return null;
 }
 
 /* ── Animated Circular Radar Sweep Component ─────────────────────── */
 function TacticalRadarWidget({ alertCount = 14 }) {
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-3 sm:gap-4 w-full">
       <div className="radar-container shrink-0">
         <div className="radar-crosshair-h" />
         <div className="radar-crosshair-v" />
@@ -81,14 +107,18 @@ function TacticalRadarWidget({ alertCount = 14 }) {
         <div className="radar-blip" style={{ top: '75%', left: '70%', animationDelay: '1.1s' }} />
       </div>
 
-      <div className="space-y-1.5 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-          <span className="text-xs font-semibold uppercase tracking-wider text-cyan-300">Live Sweep Active</span>
+      <div className="space-y-1 min-w-0 flex-1">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
+          <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-cyan-300 truncate">
+            Live Sweep Active
+          </span>
         </div>
-        <p className="text-sm font-bold text-slate-100">{alertCount} High-Risk Hotspots</p>
-        <p className="text-[11px] text-slate-400 leading-tight">
-          Scanning 100 PHC telemetry beacons across 5 BRICS clusters every 30s.
+        <p className="text-xs sm:text-sm font-bold text-slate-100 truncate">
+          {alertCount} Hotspot Clusters
+        </p>
+        <p className="text-[10px] sm:text-[11px] text-slate-400 leading-tight line-clamp-2">
+          100 PHC telemetry beacons monitored across BRICS.
         </p>
       </div>
     </div>
@@ -113,17 +143,17 @@ function ScenarioModal({ isOpen, onClose, onApply }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-in fade-in duration-200"
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200"
          onClick={onClose}>
-      <div className="glass-panel p-6 sm:p-8 w-full max-w-lg relative border-cyan-500/30 shadow-[0_0_50px_rgba(56,189,248,0.2)]"
+      <div className="glass-panel p-5 sm:p-7 w-full max-w-lg relative border-cyan-500/30 shadow-[0_0_50px_rgba(56,189,248,0.2)] max-h-[92vh] overflow-y-auto"
            onClick={e => e.stopPropagation()}>
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400">
+            <div className="w-10 h-10 rounded-xl bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400 shrink-0">
               <Flame className="w-5 h-5 animate-pulse" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white tracking-wide">Outbreak Stress-Test Simulator</h2>
+              <h2 className="text-base sm:text-lg font-bold text-white tracking-wide">Outbreak Stress-Test Simulator</h2>
               <p className="text-xs text-slate-400">Inject dynamic epidemiological surges into the grid</p>
             </div>
           </div>
@@ -132,12 +162,12 @@ function ScenarioModal({ isOpen, onClose, onApply }) {
           </button>
         </div>
 
-        <div className="space-y-5">
+        <div className="space-y-4">
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
               Pathogen / Disease Profile
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {[
                 { id: 'dengue', label: '🦟 Dengue Surge', desc: 'ORS & IV Fluids' },
                 { id: 'cholera', label: '💧 Waterborne', desc: 'Antibiotics & Salts' },
@@ -147,7 +177,7 @@ function ScenarioModal({ isOpen, onClose, onApply }) {
                   key={d.id}
                   type="button"
                   onClick={() => setType(d.id)}
-                  className={`p-3 rounded-xl border text-left transition-all ${
+                  className={`p-2.5 sm:p-3 rounded-xl border text-left transition-all ${
                     type === d.id
                       ? 'bg-cyan-500/15 border-cyan-400/60 text-cyan-300 shadow-[0_0_15px_rgba(56,189,248,0.2)]'
                       : 'bg-slate-900/60 border-slate-700/60 text-slate-300 hover:border-slate-600'
@@ -168,7 +198,7 @@ function ScenarioModal({ isOpen, onClose, onApply }) {
               type="text"
               value={districts}
               onChange={e => setDistricts(e.target.value)}
-              className="w-full bg-slate-900/80 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-slate-100 outline-none focus:border-cyan-400/80 focus:ring-1 focus:ring-cyan-400/40"
+              className="w-full bg-slate-900/80 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 outline-none focus:border-cyan-400/80 focus:ring-1 focus:ring-cyan-400/40"
               placeholder="e.g. Pune, Delhi, São Paulo"
             />
             <p className="text-[11px] text-slate-500 mt-1">Comma-separated districts matching the PHC grid registry</p>
@@ -201,7 +231,7 @@ function ScenarioModal({ isOpen, onClose, onApply }) {
           </div>
         </div>
 
-        <div className="flex gap-3 mt-8">
+        <div className="flex gap-3 mt-6 sm:mt-7">
           <button
             onClick={onClose}
             className="flex-1 px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800/80 text-sm font-medium transition-colors"
@@ -261,9 +291,9 @@ function PHCDetailDrawer({ phcId, onClose }) {
   ] : [];
 
   return (
-    <div className="fixed inset-y-0 right-0 z-[1000] w-full sm:w-[500px] glass-panel rounded-none sm:rounded-l-2xl border-y-0 border-r-0 border-l border-cyan-500/30 shadow-[-20px_0_60px_rgba(0,0,0,0.8)] overflow-y-auto flex flex-col animate-in slide-in-from-right duration-300">
+    <div className="fixed inset-y-0 right-0 z-[1000] w-full sm:w-[480px] lg:w-[520px] glass-panel rounded-none sm:rounded-l-2xl border-y-0 border-r-0 border-l border-cyan-500/30 shadow-[-20px_0_60px_rgba(0,0,0,0.85)] overflow-y-auto flex flex-col animate-in slide-in-from-right duration-300">
       {/* Top Header */}
-      <div className="p-6 border-b border-slate-700/60 sticky top-0 bg-[#070e20]/90 backdrop-blur-xl z-20 flex justify-between items-start">
+      <div className="p-4 sm:p-6 border-b border-slate-700/60 sticky top-0 bg-[#070e20]/95 backdrop-blur-xl z-20 flex justify-between items-start">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold tracking-widest bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
@@ -271,7 +301,9 @@ function PHCDetailDrawer({ phcId, onClose }) {
             </span>
             <span className="text-xs text-slate-400">{phcData?.district} • {phcData?.country}</span>
           </div>
-          <h2 className="text-lg font-bold text-white">{phcData?.name || 'Loading Node…'}</h2>
+          <h2 className="text-base sm:text-lg font-bold text-white truncate max-w-[320px]">
+            {phcData?.name || 'Loading Node…'}
+          </h2>
         </div>
         <button
           onClick={onClose}
@@ -281,15 +313,15 @@ function PHCDetailDrawer({ phcId, onClose }) {
         </button>
       </div>
 
-      <div className="p-6 space-y-6 flex-1">
+      <div className="p-4 sm:p-6 space-y-5 flex-1">
         {/* Quick Node Vital Cards */}
         {phcData && (
           <div className="grid grid-cols-2 gap-3">
-            <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800">
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
               <span className="text-[11px] text-slate-400 flex items-center gap-1.5 mb-1">
                 <BedDouble className="w-3.5 h-3.5 text-cyan-400" /> Bed Occupancy
               </span>
-              <p className="text-lg font-bold text-slate-100">
+              <p className="text-base sm:text-lg font-bold text-slate-100">
                 {phcData.beds_occupied} / {phcData.beds_total}
                 <span className="text-xs text-cyan-400 font-normal ml-1">
                   ({Math.round((phcData.beds_occupied / Math.max(1, phcData.beds_total)) * 100)}%)
@@ -297,11 +329,11 @@ function PHCDetailDrawer({ phcId, onClose }) {
               </p>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800">
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
               <span className="text-[11px] text-slate-400 flex items-center gap-1.5 mb-1">
                 <Users className="w-3.5 h-3.5 text-emerald-400" /> Staff Attendance
               </span>
-              <p className="text-lg font-bold text-slate-100">
+              <p className="text-base sm:text-lg font-bold text-slate-100">
                 {phcData.staff_present} / {phcData.staff_total}
                 <span className="text-xs text-emerald-400 font-normal ml-1">
                   ({Math.round((phcData.staff_present / Math.max(1, phcData.staff_total)) * 100)}%)
@@ -313,37 +345,37 @@ function PHCDetailDrawer({ phcId, onClose }) {
 
         {/* Medicine Inventory Grid */}
         <div>
-          <div className="flex justify-between items-center mb-3">
+          <div className="flex justify-between items-center mb-2.5">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
               <Pill className="w-3.5 h-3.5 text-cyan-400" /> Medicine Stock & Days of Cover
             </h3>
-            <span className="text-[11px] text-slate-500">Click to forecast</span>
+            <span className="text-[10px] text-slate-500">Tap to forecast</span>
           </div>
 
-          <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+          <div className="space-y-1.5 max-h-[220px] overflow-y-auto pr-1">
             {phcData?.stock?.map(s => {
               const isSelected = selectedMed === s.medicine;
               return (
                 <div
                   key={s.medicine}
                   onClick={() => setSelectedMed(s.medicine)}
-                  className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                  className={`p-2.5 sm:p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
                     isSelected
                       ? 'bg-cyan-500/15 border-cyan-400/60 shadow-[0_0_15px_rgba(56,189,248,0.15)]'
                       : 'bg-slate-900/40 border-slate-800/80 hover:bg-slate-900/80 hover:border-slate-700'
                   }`}
                 >
                   <div className="min-w-0 flex-1">
-                    <p className={`text-sm font-semibold truncate ${isSelected ? 'text-cyan-300' : 'text-slate-200'}`}>
+                    <p className={`text-xs sm:text-sm font-semibold truncate ${isSelected ? 'text-cyan-300' : 'text-slate-200'}`}>
                       {s.medicine}
                     </p>
-                    <p className="text-xs text-slate-400">
-                      {Math.round(s.stock_on_hand).toLocaleString()} units on hand • {s.daily_consumption_avg.toFixed(1)}/day burn
+                    <p className="text-[11px] text-slate-400">
+                      {Math.round(s.stock_on_hand).toLocaleString()} units • {s.daily_consumption_avg.toFixed(1)}/day burn
                     </p>
                   </div>
-                  <div className="text-right shrink-0 ml-3">
+                  <div className="text-right shrink-0 ml-2">
                     <span
-                      className="px-2 py-0.5 rounded-full text-xs font-bold border"
+                      className="px-2 py-0.5 rounded-full text-[11px] font-bold border"
                       style={{
                         color: statusPalette[s.status],
                         borderColor: `${statusPalette[s.status]}40`,
@@ -361,22 +393,22 @@ function PHCDetailDrawer({ phcId, onClose }) {
 
         {/* 14-Day Ridge Regression Forecast Chart */}
         {selectedMed && (
-          <div className="pt-2">
+          <div className="pt-1">
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                 <TrendingUp className="w-3.5 h-3.5 text-cyan-400" />
-                14-Day Demand Forecast ({selectedMed})
+                14-Day Projection ({selectedMed})
               </h3>
               {forecastData?.mape && (
-                <span className="text-[11px] text-cyan-300 font-mono">
+                <span className="text-[10px] text-cyan-300 font-mono">
                   MAPE: {forecastData.mape.toFixed(1)}%
                 </span>
               )}
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800/80">
+            <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80">
               {chartSeries.length > 0 ? (
-                <ResponsiveContainer width="100%" height={220}>
+                <ResponsiveContainer width="100%" height={210}>
                   <AreaChart data={chartSeries}>
                     <defs>
                       <linearGradient id="bandGrad" x1="0" y1="0" x2="0" y2="1">
@@ -385,8 +417,8 @@ function PHCDetailDrawer({ phcId, onClose }) {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                    <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#64748b' }} interval={4} />
-                    <YAxis tick={{ fontSize: 10, fill: '#64748b' }} />
+                    <XAxis dataKey="date" tick={{ fontSize: 9, fill: '#64748b' }} interval={4} />
+                    <YAxis tick={{ fontSize: 9, fill: '#64748b' }} />
                     <Tooltip
                       contentStyle={{
                         background: 'rgba(13,22,41,0.95)',
@@ -403,19 +435,19 @@ function PHCDetailDrawer({ phcId, onClose }) {
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-[220px] flex items-center justify-center text-slate-500 text-xs">
+                <div className="h-[210px] flex items-center justify-center text-slate-500 text-xs">
                   Loading ML Ridge Forecast…
                 </div>
               )}
               <div className="flex justify-between items-center text-[10px] text-slate-400 mt-2 border-t border-slate-800 pt-2">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-0.5 bg-emerald-400" /> Actual (30d)
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-0.5 bg-emerald-400" /> Actual (30d)
                 </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-0.5 bg-amber-400 border-dashed" /> Forecast (14d)
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-0.5 bg-amber-400 border-dashed" /> Forecast (14d)
                 </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded bg-cyan-500/20" /> ±1σ Band
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded bg-cyan-500/20" /> ±1σ Band
                 </span>
               </div>
             </div>
@@ -466,7 +498,6 @@ export default function App() {
       setRedistribution(rd);
       setFederation(fed);
 
-      // Auto-focus first critical PHC if none focused
       if (ph && ph.length > 0 && !focusedPHC) {
         const crit = ph.find(p => p.status === 'critical') || ph[0];
         setFocusedPHC(crit);
@@ -540,37 +571,37 @@ export default function App() {
   return (
     <div className="flex flex-col min-h-screen text-slate-100 font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
       {/* ══════════════════════════════════════════════════════════════
-          TOP FLOATING NAVIGATION BAR (Matching Reference Image 2)
+          TOP FLOATING NAVIGATION BAR (Responsive on all viewports)
          ══════════════════════════════════════════════════════════════ */}
-      <header className="px-6 py-4 flex items-center justify-between shrink-0 z-30">
+      <header className="px-3 sm:px-6 py-3 sm:py-4 flex flex-wrap items-center justify-between gap-3 shrink-0 z-30">
         {/* Brand Logo & Telemetry Indicator */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 sm:gap-3">
           <div className="relative">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-500 via-indigo-500 to-emerald-400 p-[1.5px] shadow-[0_0_25px_rgba(56,189,248,0.4)]">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-cyan-500 via-indigo-500 to-emerald-400 p-[1.5px] shadow-[0_0_20px_rgba(56,189,248,0.35)]">
               <div className="w-full h-full bg-[#050b18] rounded-2xl flex items-center justify-center">
-                <Globe className="w-5 h-5 text-cyan-300 animate-pulse" />
+                <Globe className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-300 animate-pulse" />
               </div>
             </div>
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 border-2 border-[#050b18] rounded-full animate-ping" />
+            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 border-2 border-[#050b18] rounded-full animate-ping" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-base font-extrabold tracking-wider text-white">SANJEEVANI</h1>
-              <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+            <div className="flex items-center gap-1.5">
+              <h1 className="text-sm sm:text-base font-extrabold tracking-wider text-white">SANJEEVANI</h1>
+              <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
                 GRID
               </span>
             </div>
-            <p className="text-[10px] text-slate-400 font-medium tracking-widest uppercase">
+            <p className="text-[9px] sm:text-[10px] text-slate-400 font-medium tracking-widest uppercase">
               Sovereign Federated AI Telemetry
             </p>
           </div>
         </div>
 
-        {/* Center Floating Pill Navigation */}
-        <nav className="hidden md:flex items-center gap-1.5 glass-pill p-1.5 shadow-[0_8px_30px_rgba(0,0,0,0.5)]">
+        {/* Center Floating Pill Navigation — Fully Responsive on Mobile & Desktop */}
+        <nav className="flex items-center gap-1.5 glass-pill p-1 shadow-[0_8px_30px_rgba(0,0,0,0.5)] order-3 md:order-2 w-full md:w-auto overflow-x-auto no-scrollbar justify-center">
           <button
             onClick={() => setTab('radar')}
-            className={`px-5 py-2 rounded-full text-xs font-semibold tracking-wide transition-all ${
+            className={`px-4 sm:px-5 py-2 rounded-full text-xs font-semibold tracking-wide transition-all whitespace-nowrap ${
               tab === 'radar'
                 ? 'active-nav-pill'
                 : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
@@ -580,45 +611,45 @@ export default function App() {
           </button>
           <button
             onClick={() => setTab('redistribution')}
-            className={`px-5 py-2 rounded-full text-xs font-semibold tracking-wide transition-all flex items-center gap-1.5 ${
+            className={`px-4 sm:px-5 py-2 rounded-full text-xs font-semibold tracking-wide transition-all flex items-center gap-1.5 whitespace-nowrap ${
               tab === 'redistribution'
                 ? 'active-nav-pill'
                 : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
             }`}
           >
-            <Truck className="w-3.5 h-3.5" />
-            Redistribution Hub
+            <Truck className="w-3.5 h-3.5 shrink-0" />
+            <span>Redistribution Hub</span>
             {redistribution?.transfers?.length > 0 && (
-              <span className="ml-1 px-1.5 py-0.2 rounded-full bg-cyan-500/30 text-[10px] text-cyan-300 font-bold">
+              <span className="ml-1 px-2 py-0.5 rounded-full bg-cyan-500/30 text-[10px] text-cyan-300 font-bold">
                 {redistribution.transfers.length}
               </span>
             )}
           </button>
           <button
             onClick={() => setTab('federation')}
-            className={`px-5 py-2 rounded-full text-xs font-semibold tracking-wide transition-all flex items-center gap-1.5 ${
+            className={`px-4 sm:px-5 py-2 rounded-full text-xs font-semibold tracking-wide transition-all flex items-center gap-1.5 whitespace-nowrap ${
               tab === 'federation'
                 ? 'active-nav-pill'
                 : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
             }`}
           >
-            <Radio className="w-3.5 h-3.5" />
-            Federation Lab
-            <span className="ml-1 px-1.5 py-0.2 rounded-full bg-emerald-500/30 text-[10px] text-emerald-300 font-bold">
+            <Radio className="w-3.5 h-3.5 shrink-0" />
+            <span>Federation Lab</span>
+            <span className="hidden sm:inline-block ml-1 px-2 py-0.5 rounded-full bg-emerald-500/30 text-[10px] text-emerald-300 font-bold">
               FedAvg
             </span>
           </button>
         </nav>
 
         {/* Right Controls (Country Selector, Outbreak Trigger, Status) */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 order-2 md:order-3">
           {/* Country Filter Pill */}
-          <div className="glass-pill px-3 py-1.5 flex items-center gap-2">
-            <Globe className="w-3.5 h-3.5 text-cyan-400" />
+          <div className="glass-pill px-3 py-2 flex items-center gap-1.5">
+            <Globe className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
             <select
               value={country}
               onChange={e => setCountry(e.target.value)}
-              className="bg-transparent text-xs font-semibold text-slate-200 outline-none cursor-pointer pr-2"
+              className="bg-transparent text-xs font-semibold text-slate-200 outline-none cursor-pointer pr-1"
             >
               {COUNTRIES.map(c => (
                 <option key={c.code} value={c.code} className="bg-slate-900 text-slate-100">
@@ -631,10 +662,11 @@ export default function App() {
           {/* Outbreak Simulation Button */}
           <button
             onClick={() => setScenarioOpen(true)}
-            className="glass-pill px-4 py-2 text-xs font-bold text-red-300 hover:text-white bg-red-600/15 hover:bg-red-600/30 border-red-500/30 shadow-[0_0_20px_rgba(239,68,68,0.2)] transition-all flex items-center gap-2 cursor-pointer"
+            className="glass-pill px-3 sm:px-4 py-2 text-xs font-bold text-red-300 hover:text-white bg-red-600/15 hover:bg-red-600/30 border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.2)] transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
           >
-            <Flame className="w-3.5 h-3.5 text-red-400 animate-pulse" />
-            <span>Simulate Outbreak</span>
+            <Flame className="w-3.5 h-3.5 text-red-400 animate-pulse shrink-0" />
+            <span className="hidden sm:inline">Simulate Outbreak</span>
+            <span className="sm:hidden">Simulate</span>
           </button>
 
           {/* Live Alert Bell Badge */}
@@ -655,66 +687,62 @@ export default function App() {
       </header>
 
       {/* ══════════════════════════════════════════════════════════════
-          TOP TELEMETRY KPI HUD STRIP
+          TOP TELEMETRY KPI HUD STRIP (Responsive 2x2 or 4x1)
          ══════════════════════════════════════════════════════════════ */}
-      <div className="px-6 pb-4 grid grid-cols-2 md:grid-cols-4 gap-4 shrink-0">
+      <div className="px-3 sm:px-6 pb-3 sm:pb-4 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 shrink-0">
         {[
           {
             title: 'Critical Stock-Out Risk',
             value: overview?.stockout_risk_count ?? '15',
             unit: 'PHCs at risk',
-            badge: '<10d Cover',
             color: '#ef4444',
             icon: ShieldAlert,
           },
           {
             title: 'Average Supply Cover',
             value: overview?.avg_days_of_cover ? overview.avg_days_of_cover.toFixed(1) : '163.9',
-            unit: 'Days of Cover',
-            badge: '100 PHCs Base',
+            unit: 'Days Cover',
             color: '#10b981',
             icon: Package,
           },
           {
             title: 'Hospital Bed Occupancy',
             value: overview?.bed_occupancy_pct ? `${overview.bed_occupancy_pct.toFixed(1)}%` : '40.2%',
-            unit: 'Surge Capacity Ready',
-            badge: 'ICU & General',
+            unit: 'Capacity',
             color: '#38bdf8',
             icon: BedDouble,
           },
           {
             title: 'Staff Duty Attendance',
             value: overview?.staff_attendance_pct ? `${overview.staff_attendance_pct.toFixed(1)}%` : '76.1%',
-            unit: 'Clinical Readiness',
-            badge: 'Verified Attendance',
+            unit: 'Readiness',
             color: '#f59e0b',
             icon: Users,
           },
         ].map((kpi, i) => {
           const Icon = kpi.icon;
           return (
-            <div key={i} className="glass-panel p-4 flex items-center justify-between">
-              <div>
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <div key={i} className="glass-panel p-4 flex items-center justify-between gap-3 overflow-hidden">
+              <div className="min-w-0 pr-1 flex-1">
+                <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400 block truncate">
                   {kpi.title}
                 </span>
-                <div className="flex items-baseline gap-2 mt-1">
-                  <span className="text-2xl font-black tracking-tight" style={{ color: kpi.color }}>
+                <div className="flex items-baseline gap-1.5 mt-0.5 flex-wrap">
+                  <span className="text-xl sm:text-2xl font-black tracking-tight" style={{ color: kpi.color }}>
                     {kpi.value}
                   </span>
-                  <span className="text-xs text-slate-400 font-medium">{kpi.unit}</span>
+                  <span className="text-[10px] sm:text-xs text-slate-400 font-medium truncate">{kpi.unit}</span>
                 </div>
               </div>
               <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center border"
+                className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center border shrink-0"
                 style={{
                   backgroundColor: `${kpi.color}15`,
                   borderColor: `${kpi.color}35`,
                   color: kpi.color,
                 }}
               >
-                <Icon className="w-5 h-5" />
+                <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </div>
           );
@@ -722,17 +750,17 @@ export default function App() {
       </div>
 
       {/* ══════════════════════════════════════════════════════════════
-          MAIN VIEW CONTAINER
+          MAIN VIEW CONTAINER (Responsive Stacking on Mobile/Tablet)
          ══════════════════════════════════════════════════════════════ */}
-      <main className="flex-1 px-6 pb-6 overflow-hidden flex flex-col">
+      <main className="flex-1 px-3 sm:px-6 pb-4 sm:pb-6 overflow-hidden flex flex-col">
         {/* ── TAB 1: GRID RADAR & MAP (Matching Reference Image 2) ── */}
         {tab === 'radar' && (
-          <div className="flex-1 flex flex-col gap-4 overflow-hidden">
-            {/* Top 3-Column Cockpit Strip */}
+          <div className="flex-1 flex flex-col gap-4 overflow-y-auto lg:overflow-hidden">
+            {/* Top Multi-Column Cockpit Strip */}
             <div className="flex-1 grid grid-cols-12 gap-4 min-h-0">
               
-              {/* LEFT COLUMN: AI Insights & Critical Predictions (3 cols) */}
-              <div className="col-span-12 lg:col-span-3 flex flex-col gap-3.5 overflow-y-auto pr-1">
+              {/* LEFT COLUMN: AI Insights & Critical Predictions */}
+              <div className="order-2 xl:order-1 col-span-12 lg:col-span-4 xl:col-span-3 flex flex-col gap-4">
                 <div className="flex items-center justify-between px-1">
                   <div>
                     <h3 className="text-xs font-black tracking-widest text-cyan-400 uppercase">
@@ -749,10 +777,10 @@ export default function App() {
                 {alerts && alerts[0] ? (
                   <div
                     onClick={() => handleFocus(phcs?.find(p => p.id === alerts[0].phc_id) || alerts[0])}
-                    className="glass-panel p-4 cursor-pointer hover:border-red-500/50 group relative overflow-hidden"
+                    className="glass-panel p-4 cursor-pointer hover:border-red-500/50 group relative"
                   >
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/40">
+                    <div className="flex justify-between items-center mb-2.5">
+                      <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/40 shrink-0">
                         Surge Alert
                       </span>
                       <button
@@ -760,25 +788,25 @@ export default function App() {
                           e.stopPropagation();
                           setSelectedPHC(alerts[0].phc_id);
                         }}
-                        className="text-slate-400 group-hover:text-cyan-300 transition-colors"
+                        className="text-slate-400 group-hover:text-cyan-300 transition-colors p-1"
                       >
                         <ArrowUpRight className="w-4 h-4" />
                       </button>
                     </div>
 
                     <div className="flex items-center gap-3 my-2">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500/20 to-amber-500/10 border border-red-500/30 flex items-center justify-center shrink-0">
-                        <Pill className="w-6 h-6 text-red-400" />
+                      <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-red-500/20 to-amber-500/10 border border-red-500/30 flex items-center justify-center shrink-0">
+                        <Pill className="w-5 h-5 text-red-400" />
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold text-white truncate">{alerts[0].phc_name}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs sm:text-sm font-bold text-white truncate">{alerts[0].phc_name}</p>
                         <p className="text-xs text-red-400 font-mono font-bold">
                           {alerts[0].days_of_cover.toFixed(1)} Days Cover
                         </p>
                       </div>
                     </div>
 
-                    <div className="mt-2.5 p-2 rounded-lg bg-slate-900/60 border border-slate-800 text-[11px] text-slate-300 flex items-center gap-1.5">
+                    <div className="mt-2.5 p-2 rounded-lg bg-slate-900/60 border border-slate-800 text-[11px] text-slate-300 flex items-center gap-1.5 overflow-hidden">
                       <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                       <span className="truncate">{alerts[0].reason}</span>
                     </div>
@@ -789,10 +817,10 @@ export default function App() {
                 {alerts && alerts[1] ? (
                   <div
                     onClick={() => handleFocus(phcs?.find(p => p.id === alerts[1].phc_id) || alerts[1])}
-                    className="glass-panel p-4 cursor-pointer hover:border-amber-500/50 group relative overflow-hidden"
+                    className="glass-panel p-4 cursor-pointer hover:border-amber-500/50 group relative"
                   >
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                    <div className="flex justify-between items-center mb-2.5">
+                      <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0">
                         About to Expire
                       </span>
                       <button
@@ -800,25 +828,25 @@ export default function App() {
                           e.stopPropagation();
                           setSelectedPHC(alerts[1].phc_id);
                         }}
-                        className="text-slate-400 group-hover:text-cyan-300 transition-colors"
+                        className="text-slate-400 group-hover:text-cyan-300 transition-colors p-1"
                       >
                         <ArrowUpRight className="w-4 h-4" />
                       </button>
                     </div>
 
                     <div className="flex items-center gap-3 my-2">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-blue-500/10 border border-amber-500/30 flex items-center justify-center shrink-0">
-                        <Activity className="w-6 h-6 text-amber-400" />
+                      <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500/20 to-blue-500/10 border border-amber-500/30 flex items-center justify-center shrink-0">
+                        <Activity className="w-5 h-5 text-amber-400" />
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold text-white truncate">{alerts[1].phc_name}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs sm:text-sm font-bold text-white truncate">{alerts[1].phc_name}</p>
                         <p className="text-xs text-amber-300 font-mono font-bold">
                           {alerts[1].medicine} • {alerts[1].days_of_cover.toFixed(1)}d
                         </p>
                       </div>
                     </div>
 
-                    <div className="mt-2.5 p-2 rounded-lg bg-slate-900/60 border border-slate-800 text-[11px] text-slate-300 flex items-center gap-1.5">
+                    <div className="mt-2.5 p-2 rounded-lg bg-slate-900/60 border border-slate-800 text-[11px] text-slate-300 flex items-center gap-1.5 overflow-hidden">
                       <TrendingUp className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                       <span className="truncate">{alerts[1].reason}</span>
                     </div>
@@ -828,35 +856,35 @@ export default function App() {
                 {/* Card 3: AI Transfer Recommendation */}
                 {redistribution?.transfers?.[0] ? (
                   <div className="glass-panel p-4 border-cyan-500/30 relative">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shrink-0">
                         Recommendation
                       </span>
-                      <span className="text-xs text-slate-400">
+                      <span className="text-xs text-slate-400 font-mono">
                         {redistribution.transfers[0].distance_km} km
                       </span>
                     </div>
 
                     <div className="my-2">
-                      <p className="text-xs font-bold text-white">
+                      <p className="text-xs sm:text-sm font-bold text-white truncate">
                         {redistribution.transfers[0].medicine} Dispatch
                       </p>
-                      <p className="text-[11px] text-slate-400 mt-0.5">
+                      <p className="text-[11px] text-slate-400 mt-0.5 truncate">
                         {redistribution.transfers[0].from_phc_name} → {redistribution.transfers[0].to_phc_name}
                       </p>
                     </div>
 
-                    <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-800">
-                      <span className="text-xs font-mono font-bold text-emerald-400">
+                    <div className="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-slate-800 flex-wrap">
+                      <span className="text-xs font-mono font-bold text-emerald-400 shrink-0">
                         +{Math.round(redistribution.transfers[0].quantity)} units
                       </span>
                       <button
                         onClick={() => handleApprove(redistribution.transfers[0].id)}
                         disabled={approvedIds.has(redistribution.transfers[0].id)}
-                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
                           approvedIds.has(redistribution.transfers[0].id)
                             ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                            : 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-[0_0_15px_rgba(56,189,248,0.4)]'
+                            : 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-[0_0_12px_rgba(56,189,248,0.35)]'
                         }`}
                       >
                         {approvedIds.has(redistribution.transfers[0].id) ? '✓ Dispatched' : 'Approve Transfer'}
@@ -866,21 +894,23 @@ export default function App() {
                 ) : null}
               </div>
 
-              {/* CENTER COLUMN: Master Holographic Map Telemetry (6 cols) */}
-              <div className="col-span-12 lg:col-span-6 flex flex-col relative rounded-2xl overflow-hidden glass-panel border-cyan-500/20">
-                {/* Map Layer with CartoDB Dark Matter tiles */}
+              {/* CENTER COLUMN: Master Map Canvas (6 cols on desktop, primary on mobile) */}
+              <div className="order-1 lg:order-2 col-span-12 lg:col-span-6 flex flex-col relative rounded-2xl overflow-hidden glass-panel border-cyan-500/20 h-[380px] sm:h-[450px] lg:h-[540px] xl:h-full min-h-[380px]">
+                {/* Tactical Dark Matter Basemap */}
                 <div className="w-full h-full min-h-[380px] relative">
                   <MapContainer
                     center={[20, 30]}
                     zoom={2}
                     zoomControl={false}
-                    style={{ height: '100%', width: '100%', background: '#050b18' }}
+                    style={{ height: '100%', minHeight: '380px', width: '100%', background: '#050b18' }}
                   >
                     <TileLayer
-                      attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
                       url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                      subdomains="abcd"
+                      maxZoom={19}
                     />
-                    {mapCenter && <MapCameraController center={mapCenter} zoom={mapZoom} />}
+                    <MapCameraController center={mapCenter} zoom={mapZoom} />
 
                     {/* Approved Transfer Polyline Routes with Dash Particle Animation */}
                     {approvedTransfers.map((t, idx) => (
@@ -932,15 +962,15 @@ export default function App() {
                     })}
                   </MapContainer>
 
-                  {/* Floating AI Query Bar over Map (matching Image 2) */}
-                  <div className="absolute bottom-5 inset-x-8 z-[500] flex justify-center">
-                    <div className="glass-pill px-4 py-2.5 w-full max-w-md flex items-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.7)] border-cyan-500/30">
+                  {/* Floating AI Query Bar over Map with clean clearance above attribution */}
+                  <div className="absolute bottom-6 sm:bottom-5 inset-x-3 sm:inset-x-8 z-[450] flex justify-center pointer-events-none">
+                    <div className="glass-pill px-3.5 sm:px-4 py-2 sm:py-2.5 w-full max-w-md flex items-center gap-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.85)] border-cyan-500/30 pointer-events-auto">
                       <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
                       <input
                         type="text"
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
-                        placeholder="Search PHC, district, medicine, or ask intelligence..."
+                        placeholder="Search PHC, district, medicine, or ask AI..."
                         className="bg-transparent text-xs text-slate-200 outline-none w-full placeholder:text-slate-500"
                       />
                       {searchQuery ? (
@@ -952,7 +982,7 @@ export default function App() {
                           onClick={() => {
                             if (filteredPHCs.length > 0) handleFocus(filteredPHCs[0]);
                           }}
-                          className="px-3 py-1 rounded-full bg-cyan-500 text-slate-950 font-bold text-[10px] tracking-wide shrink-0 shadow-[0_0_10px_rgba(56,189,248,0.5)]"
+                          className="px-2.5 py-1 rounded-full bg-cyan-500 text-slate-950 font-bold text-[10px] tracking-wide shrink-0 shadow-[0_0_10px_rgba(56,189,248,0.5)]"
                         >
                           Explore
                         </button>
@@ -962,38 +992,38 @@ export default function App() {
                 </div>
               </div>
 
-              {/* RIGHT COLUMN: Node Inspector & Sweep Radar (3 cols) */}
-              <div className="col-span-12 lg:col-span-3 flex flex-col gap-3.5 overflow-y-auto pr-1">
+              {/* RIGHT COLUMN: Node Inspector & Sweep Radar (3 cols on desktop) */}
+              <div className="order-2 lg:order-3 col-span-12 lg:col-span-3 flex flex-col gap-3.5 pr-0 lg:pr-1">
                 
                 {/* Node Inspector Card (matching "Code SAT-123" card in Image 2) */}
-                <div className="glass-panel p-5 border-cyan-500/30 relative">
+                <div className="glass-panel p-4 sm:p-5 border-cyan-500/30 relative">
                   <div className="flex justify-between items-start">
                     <div>
                       <span className="text-[10px] font-mono tracking-widest uppercase text-cyan-400">
                         Telemetric Node
                       </span>
-                      <h3 className="text-xl font-black text-white tracking-tight">
+                      <h3 className="text-lg sm:text-xl font-black text-white tracking-tight">
                         {focusedPHC?.id || 'IN-PUN-001'}
                       </h3>
                       <p className="text-xs text-slate-400 truncate max-w-[200px]">
-                        {focusedPHC?.name || 'Pune Urban PHC'}
+                        {focusedPHC?.name || 'Pune Central PHC'}
                       </p>
                     </div>
                     <button
                       onClick={() => setSelectedPHC(focusedPHC?.id || 'IN-PUN-001')}
-                      className="w-8 h-8 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-cyan-300 transition-colors"
+                      className="w-8 h-8 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-cyan-300 transition-colors shrink-0"
                     >
                       <ArrowUpRight className="w-4 h-4" />
                     </button>
                   </div>
 
                   {/* 2x2 Telemetry Grid */}
-                  <div className="grid grid-cols-2 gap-4 my-4 pt-3 border-t border-slate-800">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4 my-3.5 pt-3 border-t border-slate-800">
                     <div>
                       <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                         Supply Runway
                       </span>
-                      <p className="text-lg font-black text-amber-400 font-mono">
+                      <p className="text-base sm:text-lg font-black text-amber-400 font-mono">
                         {focusedPHC?.worst_days_of_cover ? `${focusedPHC.worst_days_of_cover.toFixed(1)}d` : '3.2d'}
                       </p>
                     </div>
@@ -1002,7 +1032,7 @@ export default function App() {
                       <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                         Bed Utilization
                       </span>
-                      <p className="text-lg font-black text-cyan-400 font-mono">
+                      <p className="text-base sm:text-lg font-black text-cyan-400 font-mono">
                         {focusedPHC?.beds_total ? `${Math.round((focusedPHC.beds_occupied / focusedPHC.beds_total) * 100)}%` : '85%'}
                       </p>
                     </div>
@@ -1011,7 +1041,7 @@ export default function App() {
                       <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                         Clinical Staff
                       </span>
-                      <p className="text-lg font-black text-emerald-400 font-mono">
+                      <p className="text-base sm:text-lg font-black text-emerald-400 font-mono">
                         {focusedPHC?.staff_total ? `${focusedPHC.staff_present}/${focusedPHC.staff_total}` : '10/12'}
                       </p>
                     </div>
@@ -1020,23 +1050,23 @@ export default function App() {
                       <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                         Alert Status
                       </span>
-                      <p className="text-sm font-black capitalize flex items-center gap-1.5 mt-0.5"
+                      <p className="text-xs sm:text-sm font-black capitalize flex items-center gap-1.5 mt-0.5"
                          style={{ color: statusPalette[focusedPHC?.status || 'critical'] }}>
-                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: statusPalette[focusedPHC?.status || 'critical'] }} />
-                        {focusedPHC?.status || 'Critical'}
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: statusPalette[focusedPHC?.status || 'critical'] }} />
+                        <span className="truncate">{focusedPHC?.status || 'Critical'}</span>
                       </p>
                     </div>
                   </div>
 
                   {/* Mission / District Label */}
                   <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
-                    <div>
+                    <div className="min-w-0 pr-1">
                       <span className="text-[10px] text-slate-500 uppercase tracking-wider">Mission Cluster</span>
-                      <p className="text-xs font-bold text-slate-200">{focusedPHC?.district || 'Pune District'}</p>
+                      <p className="text-xs font-bold text-slate-200 truncate">{focusedPHC?.district || 'Pune District'}</p>
                     </div>
                     <button
                       onClick={() => setSelectedPHC(focusedPHC?.id || 'IN-PUN-001')}
-                      className="px-2.5 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-xs font-semibold hover:bg-cyan-500/30 transition-all flex items-center gap-1"
+                      className="px-2.5 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-xs font-semibold hover:bg-cyan-500/30 transition-all flex items-center gap-1 shrink-0"
                     >
                       <span>Inspect</span>
                       <ChevronRight className="w-3.5 h-3.5" />
@@ -1052,10 +1082,10 @@ export default function App() {
             </div>
 
             {/* Bottom 2-Card Row (Matching Reference Image 2 bottom row) */}
-            <div className="grid grid-cols-12 gap-4 h-[190px] shrink-0">
+            <div className="order-4 grid grid-cols-12 gap-4 shrink-0">
               
               {/* Bottom Left: Active Supply Transfers (matching "Upcoming Launches" in Image 2) */}
-              <div className="col-span-12 lg:col-span-7 glass-panel p-4 flex flex-col">
+              <div className="col-span-12 lg:col-span-7 glass-panel p-3.5 sm:p-4 flex flex-col justify-between">
                 <div className="flex justify-between items-center mb-3">
                   <div className="flex items-center gap-2">
                     <Truck className="w-4 h-4 text-cyan-400" />
@@ -1067,18 +1097,18 @@ export default function App() {
                     onClick={() => setTab('redistribution')}
                     className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-semibold"
                   >
-                    <span>View All Transfers</span>
+                    <span>View All</span>
                     <ArrowUpRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
-                <div className="flex-1 grid grid-cols-3 gap-3 overflow-hidden">
+                <div className="flex overflow-x-auto sm:grid sm:grid-cols-3 gap-3 pb-1 no-scrollbar">
                   {redistribution?.transfers?.slice(0, 3).map((t, idx) => {
                     const isApproved = approvedIds.has(t.id) || t.approved;
                     return (
                       <div
                         key={t.id}
-                        className={`p-3 rounded-xl border flex flex-col justify-between transition-all ${
+                        className={`min-w-[190px] sm:min-w-0 p-3 rounded-xl border flex flex-col justify-between transition-all shrink-0 sm:shrink ${
                           isApproved
                             ? 'bg-emerald-500/10 border-emerald-500/30'
                             : 'bg-slate-900/50 border-slate-800/80 hover:border-slate-700'
@@ -1086,7 +1116,7 @@ export default function App() {
                       >
                         <div>
                           <div className="flex justify-between items-center mb-1">
-                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+                            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-800 text-slate-300">
                               Order #{100 + idx}
                             </span>
                             <span className="text-[10px] text-cyan-400 font-bold">{t.distance_km} km</span>
@@ -1097,14 +1127,14 @@ export default function App() {
                           </p>
                         </div>
 
-                        <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-800/60">
-                          <span className="text-[11px] font-mono font-bold text-slate-200">
+                        <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-800/60 gap-1.5">
+                          <span className="text-[11px] font-mono font-bold text-slate-200 truncate">
                             {Math.round(t.quantity)} Units
                           </span>
                           <button
                             onClick={() => handleApprove(t.id)}
                             disabled={isApproved}
-                            className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            className={`px-2.5 py-1 rounded text-[10px] font-bold shrink-0 ${
                               isApproved
                                 ? 'text-emerald-400'
                                 : 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-[0_0_8px_rgba(56,189,248,0.3)]'
@@ -1120,7 +1150,7 @@ export default function App() {
               </div>
 
               {/* Bottom Right: Medicine Stock by Criticality (matching "Satellites by End-Use Category" in Image 2) */}
-              <div className="col-span-12 lg:col-span-5 glass-panel p-4 flex flex-col justify-between">
+              <div className="col-span-12 lg:col-span-5 glass-panel p-3.5 sm:p-4 flex flex-col justify-between">
                 <div className="flex justify-between items-center mb-2">
                   <div className="flex items-center gap-2">
                     <Layers className="w-4 h-4 text-cyan-400" />
@@ -1140,8 +1170,8 @@ export default function App() {
                   ].map((row, i) => (
                     <div key={i} className="space-y-1">
                       <div className="flex justify-between text-xs font-medium">
-                        <span className="text-slate-300 text-[11px]">{row.label}</span>
-                        <span className="text-slate-200 font-mono font-bold text-[11px]">{row.count} PHCs</span>
+                        <span className="text-slate-300 text-[11px] truncate">{row.label}</span>
+                        <span className="text-slate-200 font-mono font-bold text-[11px] shrink-0 ml-2">{row.count} PHCs</span>
                       </div>
                       <div className="w-full h-1.5 rounded-full bg-slate-800/80 overflow-hidden">
                         <div
@@ -1160,10 +1190,10 @@ export default function App() {
 
         {/* ── TAB 2: REDISTRIBUTION HUB ── */}
         {tab === 'redistribution' && (
-          <div className="flex-1 glass-panel p-6 flex flex-col gap-6 overflow-y-auto">
-            <div className="flex justify-between items-center border-b border-slate-800 pb-4">
+          <div className="flex-1 glass-panel p-4 sm:p-6 flex flex-col gap-5 overflow-y-auto">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
               <div>
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
                   <Truck className="w-5 h-5 text-cyan-400" />
                   Automated Cross-District Supply Redistribution Hub
                 </h2>
@@ -1171,18 +1201,18 @@ export default function App() {
                   Algorithmic surplus-to-deficit routing with distance penalty optimization
                 </p>
               </div>
-              <span className="text-xs font-mono px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+              <span className="text-xs font-mono px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 w-fit">
                 {redistribution?.transfers?.length || 0} Recommended Transfer Orders
               </span>
             </div>
 
-            {/* Transfers Table */}
+            {/* Transfers Table with Horizontal Scroll Support */}
             <div className="space-y-3">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
                 Recommended Internal Transfers
               </h3>
-              <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-950/60">
-                <table className="w-full text-left text-xs">
+              <div className="rounded-xl border border-slate-800 overflow-x-auto bg-slate-950/60">
+                <table className="w-full text-left text-xs min-w-[700px]">
                   <thead className="bg-slate-900/80 text-slate-400 uppercase font-mono border-b border-slate-800">
                     <tr>
                       <th className="p-3">Order ID</th>
@@ -1237,7 +1267,7 @@ export default function App() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {redistribution.international_aid.map((aid, idx) => (
-                    <div key={idx} className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex justify-between items-center">
+                    <div key={idx} className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex justify-between items-center gap-3">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono font-bold text-xs">
@@ -1245,14 +1275,14 @@ export default function App() {
                           </span>
                           <span className="text-xs text-slate-300">Deficit Declaration</span>
                         </div>
-                        <p className="text-sm font-bold text-white">
+                        <p className="text-xs sm:text-sm font-bold text-white">
                           Requires {Math.round(aid.deficit_units)} Units of {aid.medicine}
                         </p>
                         <p className="text-xs text-slate-400 mt-1">
                           Designated Donors: <span className="text-emerald-400 font-semibold">{aid.potential_donors.join(', ')}</span>
                         </p>
                       </div>
-                      <button className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-[0_0_12px_rgba(245,158,11,0.4)]">
+                      <button className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-[0_0_12px_rgba(245,158,11,0.4)] shrink-0">
                         Coordinate Aid
                       </button>
                     </div>
@@ -1265,10 +1295,10 @@ export default function App() {
 
         {/* ── TAB 3: FEDERATION LAB ── */}
         {tab === 'federation' && (
-          <div className="flex-1 glass-panel p-6 flex flex-col gap-6 overflow-y-auto">
-            <div className="flex justify-between items-center border-b border-slate-800 pb-4">
+          <div className="flex-1 glass-panel p-4 sm:p-6 flex flex-col gap-5 overflow-y-auto">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
               <div>
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
                   <Radio className="w-5 h-5 text-emerald-400" />
                   Sovereign Federated Learning Consensus Lab (FedAvg)
                 </h2>
@@ -1280,7 +1310,7 @@ export default function App() {
               <button
                 onClick={handleFederationTrain}
                 disabled={trainingRound}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-bold text-xs shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center gap-2 disabled:opacity-50"
+                className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-bold text-xs shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center gap-2 disabled:opacity-50 w-fit"
               >
                 <RefreshCw className={`w-4 h-4 ${trainingRound ? 'animate-spin' : ''}`} />
                 {trainingRound ? 'Executing Consensus Round…' : 'Trigger Federated Round'}
@@ -1288,27 +1318,27 @@ export default function App() {
             </div>
 
             {/* Privacy Guarantee Banner */}
-            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-start gap-3">
+            <div className="p-3.5 sm:p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-start gap-3">
               <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
               <div>
                 <h4 className="text-xs font-bold text-emerald-300 uppercase tracking-wide">
                   Mathematical Sovereignty Guarantee
                 </h4>
-                <p className="text-xs text-slate-300 mt-0.5">
+                <p className="text-xs text-slate-300 mt-0.5 leading-relaxed">
                   {federation?.privacy_note || 'Raw patient and stock records never cross national boundaries. Only low-dimensional Ridge weight vectors (w) and sample counts (n) are federated.'}
                 </p>
               </div>
             </div>
 
             {/* Comparison Charts Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               
               {/* Chart 1: Bar Chart Local vs Federated MAPE */}
-              <div className="p-5 rounded-xl bg-slate-950/70 border border-slate-800">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
+              <div className="p-4 sm:p-5 rounded-xl bg-slate-950/70 border border-slate-800">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 sm:mb-4">
                   Local-Only vs Federated Model Error Rate (MAPE %)
                 </h4>
-                <div className="h-[220px]">
+                <div className="h-[200px] sm:h-[220px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={(federation?.per_country || []).map(c => ({
@@ -1336,11 +1366,11 @@ export default function App() {
               </div>
 
               {/* Chart 2: Convergence over Rounds */}
-              <div className="p-5 rounded-xl bg-slate-950/70 border border-slate-800">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
+              <div className="p-4 sm:p-5 rounded-xl bg-slate-950/70 border border-slate-800">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 sm:mb-4">
                   Round-by-Round Convergence Tracking
                 </h4>
-                <div className="h-[220px]">
+                <div className="h-[200px] sm:h-[220px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart
                       data={(federation?.round_history || []).map(r => ({
@@ -1370,9 +1400,9 @@ export default function App() {
               </div>
             </div>
 
-            {/* Performance Summary Table */}
-            <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-950/60">
-              <table className="w-full text-left text-xs">
+            {/* Performance Summary Table with Horizontal Scroll */}
+            <div className="rounded-xl border border-slate-800 overflow-x-auto bg-slate-950/60">
+              <table className="w-full text-left text-xs min-w-[600px]">
                 <thead className="bg-slate-900/80 text-slate-400 uppercase font-mono border-b border-slate-800">
                   <tr>
                     <th className="p-3">Country / Cluster</th>
