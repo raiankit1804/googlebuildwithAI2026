@@ -59,6 +59,10 @@ function MapCameraController({ center, zoom }) {
   useEffect(() => {
     // Force Leaflet to re-calculate container dimensions across all devices & viewports
     map.invalidateSize();
+    map.whenReady(() => {
+      map.invalidateSize();
+    });
+
     const handleResize = () => {
       try {
         map.invalidateSize();
@@ -66,16 +70,15 @@ function MapCameraController({ center, zoom }) {
         // ignore unmounted edge cases
       }
     };
+
     window.addEventListener('resize', handleResize);
-    const t1 = setTimeout(() => handleResize(), 100);
-    const t2 = setTimeout(() => handleResize(), 400);
-    const t3 = setTimeout(() => handleResize(), 1200);
+    const intervals = [50, 150, 300, 600, 1000, 2000].map(ms =>
+      setTimeout(handleResize, ms)
+    );
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
+      intervals.forEach(clearTimeout);
     };
   }, [map]);
 
@@ -894,19 +897,22 @@ export default function App() {
                 ) : null}
               </div>
 
-              {/* CENTER COLUMN: Master Map Canvas (6 cols on desktop, primary on mobile) */}
-              <div className="order-1 lg:order-2 col-span-12 lg:col-span-6 flex flex-col relative rounded-2xl overflow-hidden glass-panel border-cyan-500/20 h-[380px] sm:h-[450px] lg:h-[540px] xl:h-full min-h-[380px]">
+              {/* CENTER COLUMN: Master Map Canvas */}
+              <div 
+                className="order-1 lg:order-2 col-span-12 lg:col-span-8 xl:col-span-6 flex flex-col relative rounded-2xl overflow-hidden glass-panel border-cyan-500/20 !p-0"
+                style={{ height: '540px', minHeight: '420px' }}
+              >
                 {/* Tactical Dark Matter Basemap */}
-                <div className="w-full h-full min-h-[380px] relative">
+                <div className="w-full h-full relative" style={{ height: '100%', minHeight: '420px', width: '100%' }}>
                   <MapContainer
                     center={[20, 30]}
                     zoom={2}
                     zoomControl={false}
-                    style={{ height: '100%', minHeight: '380px', width: '100%', background: '#050b18' }}
+                    style={{ height: '100%', minHeight: '420px', width: '100%', background: '#050b18' }}
                   >
                     <TileLayer
                       attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
-                      url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                      url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
                       subdomains="abcd"
                       maxZoom={19}
                     />
