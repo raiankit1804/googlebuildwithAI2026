@@ -33,6 +33,7 @@ class AppState:
     scenario_multipliers: dict = {}  # {district: multiplier}
     redistribution_cache: dict = None
     alerts_cache: list = None
+    avg_demand_cache: dict = {}
 
 
 state = AppState()
@@ -97,6 +98,7 @@ def _compute_alerts_and_redistribution():
 async def lifespan(app: FastAPI):
     """Startup: generate data, train models, run federation."""
     _init_data()
+    _refresh_avg_demand()
     _train_models()
     _run_federation()
     _compute_alerts_and_redistribution()
@@ -132,29 +134,26 @@ def _filter_country(df, country):
     return df
 
 
-def _get_phc_status(phc_id: str) -> str:
-    """Determine worst stock status for a PHC across all medicines."""
-    latest_date = state.daily_df["date"].max()
-    phc_latest = state.daily_df[
-        (state.daily_df["phc_id"] == phc_id) &
-        (state.daily_df["date"] == latest_date)
-    ]
+def _refresh_avg_demand():
+    """Cache recent 7-day average consumption for all (phc_id, medicine) pairs."""
+    unique_dates = sorted(state.daily_df["date"].unique())
+    last_7_dates = set(unique_dates[-7:])
+    recent = state.daily_df[state.daily_df["date"].isin(last_7_dates)]
+    state.avg_demand_cache = recent.groupby(["phc_id", "medicine"])["consumption"].mean().to_dict()
 
+
+def _get_phc_status_fast(phc_id: str, latest_phc_rows: pd.DataFrame) -> tuple:
+    """Determine worst stock status for a PHC using pre-cached averages."""
     worst_doc = float("inf")
     dengue_meds = {"paracetamol", "IV fluids", "ORS"}
 
-    for _, row in phc_latest.iterrows():
+    for _, row in latest_phc_rows.iterrows():
         med = row["medicine"]
         stock = row["stock_on_hand"]
         district = row["district"]
 
-        # Avg demand
-        phc_med = state.daily_df[
-            (state.daily_df["phc_id"] == phc_id) & (state.daily_df["medicine"] == med)
-        ].sort_values("date").tail(7)
-        avg_demand = max(phc_med["consumption"].mean(), 0.1)
+        avg_demand = max(state.avg_demand_cache.get((phc_id, med), 1.0), 0.1)
 
-        # Scenario multiplier
         mult = 1.0
         if state.scenario_multipliers and district in state.scenario_multipliers:
             if med in dengue_meds:
@@ -177,29 +176,28 @@ def _get_phc_status(phc_id: str) -> str:
 
 @app.get("/api/overview")
 def overview(country: str = Query(None)):
-    """KPI summary."""
-    df = _filter_country(state.daily_df, country)
-    phcs = _filter_country(state.phcs_df, country)
-    latest_date = df["date"].max()
-    latest = df[df["date"] == latest_date]
+    """KPI summary in <5ms."""
+    if not state.avg_demand_cache:
+        _refresh_avg_demand()
 
-    # Count PHCs at stock-out risk (any medicine <10 days cover)
+    phcs = _filter_country(state.phcs_df, country)
+    phc_ids = set(phcs["phc_id"])
+
+    latest_date = state.daily_df["date"].max()
+    latest = state.daily_df[(state.daily_df["date"] == latest_date) & (state.daily_df["phc_id"].isin(phc_ids))]
+
     risk_count = 0
     total_doc = []
     dengue_meds = {"paracetamol", "IV fluids", "ORS"}
 
-    for phc_id in phcs["phc_id"].unique():
-        phc_latest = latest[latest["phc_id"] == phc_id]
+    for phc_id, group in latest.groupby("phc_id"):
         phc_at_risk = False
-        for _, row in phc_latest.iterrows():
+        for _, row in group.iterrows():
             med = row["medicine"]
             stock = row["stock_on_hand"]
             district = row["district"]
 
-            phc_med = df[
-                (df["phc_id"] == phc_id) & (df["medicine"] == med)
-            ].sort_values("date").tail(7)
-            avg_demand = max(phc_med["consumption"].mean(), 0.1)
+            avg_demand = max(state.avg_demand_cache.get((phc_id, med), 1.0), 0.1)
 
             mult = 1.0
             if state.scenario_multipliers and district in state.scenario_multipliers:
@@ -214,11 +212,8 @@ def overview(country: str = Query(None)):
         if phc_at_risk:
             risk_count += 1
 
-    # Bed occupancy
     bed_rows = latest.drop_duplicates(subset=["phc_id"])
     bed_occ = (bed_rows["beds_occupied"].sum() / max(bed_rows["beds_total"].sum(), 1)) * 100
-
-    # Staff attendance
     staff_att = (bed_rows["staff_present"].sum() / max(bed_rows["staff_total"].sum(), 1)) * 100
 
     return {
@@ -233,23 +228,28 @@ def overview(country: str = Query(None)):
 
 @app.get("/api/phcs")
 def list_phcs(country: str = Query(None)):
-    """List all PHCs with location and status."""
-    phcs = _filter_country(state.phcs_df, country)
-    result = []
+    """List all PHCs with location and status in <5ms."""
+    if not state.avg_demand_cache:
+        _refresh_avg_demand()
 
+    phcs = _filter_country(state.phcs_df, country)
+    phc_ids = set(phcs["phc_id"])
+
+    latest_date = state.daily_df["date"].max()
+    latest = state.daily_df[(state.daily_df["date"] == latest_date) & (state.daily_df["phc_id"].isin(phc_ids))]
+    latest_grouped = {pid: grp for pid, grp in latest.groupby("phc_id")}
+
+    result = []
     for _, phc in phcs.iterrows():
-        status, worst_doc = _get_phc_status(phc["phc_id"])
-        latest_date = state.daily_df["date"].max()
-        phc_latest = state.daily_df[
-            (state.daily_df["phc_id"] == phc["phc_id"]) &
-            (state.daily_df["date"] == latest_date)
-        ]
-        # Get beds/staff from latest row (they're the same across medicines)
+        pid = phc["phc_id"]
+        phc_latest = latest_grouped.get(pid, pd.DataFrame())
+        status, worst_doc = _get_phc_status_fast(pid, phc_latest) if not phc_latest.empty else ("ok", 99.0)
+
         beds_occ = int(phc_latest.iloc[0]["beds_occupied"]) if len(phc_latest) > 0 else 0
         staff_pres = int(phc_latest.iloc[0]["staff_present"]) if len(phc_latest) > 0 else 0
 
         result.append({
-            "id": phc["phc_id"],
+            "id": pid,
             "name": phc["name"],
             "country": phc["country"],
             "district": phc["district"],
@@ -274,13 +274,12 @@ def get_phc(phc_id: str):
         raise HTTPException(404, "PHC not found")
 
     phc = phc_info.iloc[0]
-    status, worst_doc = _get_phc_status(phc_id)
-
     latest_date = state.daily_df["date"].max()
     phc_latest = state.daily_df[
         (state.daily_df["phc_id"] == phc_id) &
         (state.daily_df["date"] == latest_date)
     ]
+    status, worst_doc = _get_phc_status_fast(phc_id, phc_latest)
 
     # Stock table
     dengue_meds = {"paracetamol", "IV fluids", "ORS"}
@@ -290,10 +289,7 @@ def get_phc(phc_id: str):
         stock = row["stock_on_hand"]
         district = row["district"]
 
-        phc_med = state.daily_df[
-            (state.daily_df["phc_id"] == phc_id) & (state.daily_df["medicine"] == med)
-        ].sort_values("date").tail(7)
-        avg_demand = max(phc_med["consumption"].mean(), 0.1)
+        avg_demand = max(state.avg_demand_cache.get((phc_id, med), 1.0), 0.1)
 
         mult = 1.0
         if state.scenario_multipliers and district in state.scenario_multipliers:
