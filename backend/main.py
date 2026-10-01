@@ -4,7 +4,7 @@ All endpoints match /API_CONTRACT.md
 Runs on port 8000 with CORS enabled.
 """
 
-import os, sys, json
+import os, sys, json, asyncio
 from pathlib import Path
 from contextlib import asynccontextmanager
 
@@ -94,15 +94,27 @@ def _compute_alerts_and_redistribution():
     )
 
 
+async def _async_warmup():
+    """Background model training and federation so server binds port instantly on Render."""
+    try:
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, _train_models)
+        await loop.run_in_executor(None, _run_federation)
+    except Exception as e:
+        print(f"⚠️  Background warmup note: {e}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Startup: generate data, train models, run federation."""
+    """Startup: generate data, bind port in <1s, train in background."""
     _init_data()
     _refresh_avg_demand()
-    _train_models()
-    _run_federation()
     _compute_alerts_and_redistribution()
-    print("🚀  Sanjeevani Grid backend ready on http://localhost:8000")
+    
+    # Schedule background training so Render port detection passes instantly
+    asyncio.create_task(_async_warmup())
+    
+    print("🚀  Sanjeevani Grid backend ready")
     yield
 
 
@@ -361,7 +373,15 @@ def get_forecast(phc_id: str = Query(...), medicine: str = Query(...)):
     """14-day demand forecast for a PHC + medicine."""
     key = (phc_id, medicine)
     if key not in state.models:
-        raise HTTPException(404, f"No model for {phc_id} / {medicine}")
+        series = state.daily_df[
+            (state.daily_df["phc_id"] == phc_id) & (state.daily_df["medicine"] == medicine)
+        ].sort_values("date")
+        if len(series) > 0:
+            m, s, _, _, _ = train_ridge(series)
+            if m is not None:
+                state.models[key] = (m, s)
+        if key not in state.models:
+            raise HTTPException(404, f"No model for {phc_id} / {medicine}")
 
     model, residual_std = state.models[key]
 
@@ -515,7 +535,8 @@ def get_federation():
     """Federated learning status and metrics."""
     fed = state.federation
     if not fed:
-        return {"current_round": 0, "total_rounds": 0, "per_country": [], "round_history": []}
+        _run_federation()
+        fed = state.federation
 
     per_country = []
     for cc in sorted(fed["local_mapes"]):
